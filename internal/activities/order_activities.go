@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 
-	orderpb "github.com/vogiaan1904/order-svc/protogen/golang/order"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )

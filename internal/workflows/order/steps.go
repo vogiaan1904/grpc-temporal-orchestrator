@@ -10,12 +10,12 @@ import (
 	"go.temporal.io/sdk/workflow"
 )
 
-func validateOrder(ctx workflow.Context, orderID string) (*orderpb.OrderData, error) {
+func validateOrder(ctx workflow.Context, orderCode string) (*orderpb.OrderData, error) {
 	var orderData *orderpb.OrderData
 	err := workflow.ExecuteActivity(
 		workflow.WithActivityOptions(ctx, getOrderActivityOptions()),
 		(*activities.OrderActivities).GetOrder,
-		orderID,
+		orderCode,
 	).Get(ctx, &orderData)
 	if err != nil {
 		return nil, temporal.NewNonRetryableApplicationError(
@@ -49,9 +49,9 @@ func updateOrderStatus(ctx workflow.Context, orderID string, status orderpb.Orde
 	return err
 }
 
-func processPayment(ctx workflow.Context, params OrderWorkflowParams) (*paymentpb.ProcessPaymentResponse, error) {
+func processPayment(ctx workflow.Context, params PrePaymentOrderWorkflowParams) (*paymentpb.ProcessPaymentResponse, error) {
 	paymentRequest := &paymentpb.ProcessPaymentRequest{
-		OrderId:     params.OrderID,
+		OrderCode:   params.OrderCode,
 		UserId:      params.UserID,
 		Amount:      params.Amount,
 		Method:      params.PaymentMethod,

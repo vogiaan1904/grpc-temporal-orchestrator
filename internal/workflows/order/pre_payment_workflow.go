@@ -7,24 +7,20 @@ import (
 	"go.temporal.io/sdk/workflow"
 )
 
-func ProcessPrePaymentOrder(ctx workflow.Context, params OrderWorkflowParams) (string, error) {
+func ProcessPrePaymentOrder(ctx workflow.Context, params PrePaymentOrderWorkflowParams) (string, error) {
 	logger := workflow.GetLogger(ctx)
-	logger.Info("ProcessPrePaymentOrder started", "OrderID", params.OrderID)
+	logger.Info("ProcessPrePaymentOrder started", "OrderCode", params.OrderCode)
 
-	// 1. Validate Order
-	oData, err := validateOrder(ctx, params.OrderID)
+	oData, err := validateOrder(ctx, params.OrderCode)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to validate order: %w", err)
 	}
 
-	// 2. Reserve Inventory
 	if err := reserveInventory(ctx, oData.Items); err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to reserve inventory: %w", err)
 	}
 
-	// 3. Update to PAYMENT_PENDING
-	if err := updateOrderStatus(ctx, params.OrderID, orderpb.OrderStatus_PAYMENT_PENDING); err != nil {
-		// Compensate: Release inventory
+	if err := updateOrderStatus(ctx, params.OrderCode, orderpb.OrderStatus_PAYMENT_PENDING); err != nil {
 		if compensationErr := releaseInventory(ctx, oData.Items); compensationErr != nil {
 			logger.Error("Compensation failed", "Error", compensationErr)
 		}
@@ -32,24 +28,23 @@ func ProcessPrePaymentOrder(ctx workflow.Context, params OrderWorkflowParams) (s
 		return "", fmt.Errorf("failed to update order status: %w", err)
 	}
 
-	// 4. Process Payment
 	paymentResponse, err := processPayment(ctx, params)
 	if err != nil {
-		// Compensate: Release inventory
 		if compensationErr := releaseInventory(ctx, oData.Items); compensationErr != nil {
 			logger.Error("Compensation failed", "Error", compensationErr)
 		}
+
 		return "", fmt.Errorf("payment failed: %w", err)
 	}
 
 	workflow.Go(ctx, func(ctx workflow.Context) {
 		if err := workflow.Sleep(ctx, PaymentTimeout); err != nil {
-			return // Workflow context canceled
+			return
 		}
 
-		o, err := validateOrder(ctx, params.OrderID)
+		o, err := validateOrder(ctx, params.OrderCode)
 		if err == nil && o.Status == orderpb.OrderStatus_PAYMENT_PENDING {
-			_ = updateOrderStatus(ctx, params.OrderID, orderpb.OrderStatus_PAYMENT_FAILED)
+			_ = updateOrderStatus(ctx, params.OrderCode, orderpb.OrderStatus_PAYMENT_FAILED)
 			_ = releaseInventory(ctx, oData.Items)
 		}
 	})

@@ -25,7 +25,7 @@ func (a *PaymentActivities) ProcessPayment(ctx context.Context, request *payment
 		return nil, fmt.Errorf("failed to process payment: %w", err)
 	}
 
-	log.Printf("Processed payment for order %s", request.OrderId)
+	log.Printf("Processed payment for order %s", request.OrderCode)
 	return resp, nil
 }
 

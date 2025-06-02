@@ -12,25 +12,25 @@ type OrderActivities struct {
 	Client orderpb.OrderServiceClient
 }
 
-func (a *OrderActivities) GetOrder(ctx context.Context, orderID string) (*orderpb.OrderData, error) {
-	resp, err := a.Client.FindOne(ctx, &orderpb.FindOneRequest{Id: orderID})
+func (a *OrderActivities) GetOrder(ctx context.Context, orderCode string) (*orderpb.OrderData, error) {
+	resp, err := a.Client.FindOne(ctx, &orderpb.FindOneRequest{Code: orderCode})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get order: %w", err)
 	}
 
-	log.Printf("Retrieved order %s: %v", orderID, resp.Order)
+	log.Printf("Retrieved order %s: %v", orderCode, resp.Order)
 	return resp.Order, nil
 }
 
-func (a *OrderActivities) UpdateOrderStatus(ctx context.Context, orderID string, status orderpb.OrderStatus) error {
+func (a *OrderActivities) UpdateOrderStatus(ctx context.Context, orderCode string, status orderpb.OrderStatus) error {
 	_, err := a.Client.UpdateStatus(ctx, &orderpb.UpdateStatusRequest{
-		Id:     orderID,
+		Code:   orderCode,
 		Status: status,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to update order status: %w", err)
 	}
 
-	log.Printf("Updated order %s status to %s", orderID, status.String())
+	log.Printf("Updated order %s status to %s", orderCode, status.String())
 	return nil
 }

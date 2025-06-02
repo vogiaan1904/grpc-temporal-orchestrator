@@ -14,12 +14,12 @@ import (
 	"go.temporal.io/sdk/worker"
 )
 
-const TaskQueue = "ORDER_PROCESSING_TASK_QUEUE"
+const PrePaymentOrderTaskQueue = "PRE_PAYMENT_ORDER_TASK_QUEUE"
+const PostPaymentOrderTaskQueue = "POST_PAYMENT_ORDER_TASK_QUEUE"
 
 func main() {
 	log.Println("Starting Order Orchestrator Worker")
 
-	// Create Temporal client
 	c, err := tClient.Dial(tClient.Options{})
 	if err != nil {
 		log.Fatalf("Failed to create Temporal client: %v", err)
@@ -41,11 +41,11 @@ func main() {
 	}
 	defer cleanup()
 
-	// Create worker
-	w := worker.New(c, TaskQueue, worker.Options{})
-	// Register workflows and activities
-	w.RegisterWorkflow(oWF.ProcessPrePaymentOrder)
-	w.RegisterWorkflow(oWF.ProcessPostPaymentOrder)
+	prePaymentWorker := worker.New(c, PrePaymentOrderTaskQueue, worker.Options{})
+	prePaymentWorker.RegisterWorkflow(oWF.ProcessPrePaymentOrder)
+
+	postPaymentWorker := worker.New(c, PostPaymentOrderTaskQueue, worker.Options{})
+	postPaymentWorker.RegisterWorkflow(oWF.ProcessPostPaymentOrder)
 
 	oActs := &activities.OrderActivities{
 		Client: grpcClis.Order,
@@ -54,17 +54,24 @@ func main() {
 		Client: grpcClis.Payment,
 	}
 
-	w.RegisterActivity(oActs)
-	w.RegisterActivity(pActs)
+	prePaymentWorker.RegisterActivity(oActs)
+	prePaymentWorker.RegisterActivity(pActs)
 
-	// Start worker (non-blocking)
-	err = w.Start()
+	postPaymentWorker.RegisterActivity(oActs)
+	postPaymentWorker.RegisterActivity(pActs)
+
+	err = prePaymentWorker.Start()
 	if err != nil {
-		log.Fatalf("Failed to start worker: %v", err)
+		log.Fatalf("Failed to start pre-payment worker: %v", err)
 	}
-	log.Println("Worker started")
+	log.Println("Pre-payment worker started")
 
-	// Wait for termination signal
+	err = postPaymentWorker.Start()
+	if err != nil {
+		log.Fatalf("Failed to start post-payment worker: %v", err)
+	}
+	log.Println("Post-payment worker started")
+
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
 	<-sigCh

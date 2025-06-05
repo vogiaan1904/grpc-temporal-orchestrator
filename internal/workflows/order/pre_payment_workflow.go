@@ -9,7 +9,6 @@ import (
 
 func ProcessPrePaymentOrder(ctx workflow.Context, params PrePaymentOrderWorkflowParams) (string, error) {
 	logger := workflow.GetLogger(ctx)
-	logger.Info("ProcessPrePaymentOrder started", "OrderCode", params.OrderCode)
 
 	oData, err := validateOrder(ctx, params.OrderCode)
 	if err != nil {

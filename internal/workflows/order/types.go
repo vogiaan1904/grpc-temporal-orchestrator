@@ -2,7 +2,6 @@ package order
 
 import paymentpb "github.com/vogiaan1904/order-orchestrator/protogen/golang/payment"
 
-// OrderWorkflowParams contains the parameters for the order workflow
 type PrePaymentOrderWorkflowParams struct {
 	OrderCode     string
 	UserID        string

@@ -24,6 +24,7 @@ func validateOrder(ctx workflow.Context, orderCode string) (*orderpb.OrderData, 
 			err,
 		)
 	}
+
 	return orderData, nil
 }
 

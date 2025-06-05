@@ -50,15 +50,20 @@ func main() {
 	oActs := &activities.OrderActivities{
 		Client: grpcClis.Order,
 	}
-	pActs := &activities.PaymentActivities{
+	paymentActs := &activities.PaymentActivities{
 		Client: grpcClis.Payment,
+	}
+	prodActs := &activities.ProductActivities{
+		Client: grpcClis.Product,
 	}
 
 	prePaymentWorker.RegisterActivity(oActs)
-	prePaymentWorker.RegisterActivity(pActs)
+	prePaymentWorker.RegisterActivity(paymentActs)
+	prePaymentWorker.RegisterActivity(prodActs)
 
 	postPaymentWorker.RegisterActivity(oActs)
-	postPaymentWorker.RegisterActivity(pActs)
+	postPaymentWorker.RegisterActivity(paymentActs)
+	postPaymentWorker.RegisterActivity(prodActs)
 
 	err = prePaymentWorker.Start()
 	if err != nil {

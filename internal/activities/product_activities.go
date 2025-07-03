@@ -3,7 +3,6 @@ package activities
 import (
 	"context"
 	"fmt"
-	"log"
 
 	orderpb "github.com/vogiaan1904/order-orchestrator/protogen/golang/order"
 	productpb "github.com/vogiaan1904/order-orchestrator/protogen/golang/product"
@@ -21,7 +20,7 @@ func (a *ProductActivities) ReserveInventory(ctx context.Context, items []*order
 			Quantity:  item.Quantity,
 		}
 	}
-	log.Printf("Reserving inventory: %+v", rItems)
+
 	_, err := a.Client.ReserveInventory(ctx, &productpb.ReserveInventoryRequest{
 		Items: rItems,
 	})

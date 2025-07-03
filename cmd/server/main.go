@@ -18,18 +18,19 @@ const PrePaymentOrderTaskQueue = "PRE_PAYMENT_ORDER_TASK_QUEUE"
 const PostPaymentOrderTaskQueue = "POST_PAYMENT_ORDER_TASK_QUEUE"
 
 func main() {
-	log.Println("Starting Order Orchestrator Worker")
-
-	c, err := tClient.Dial(tClient.Options{})
-	if err != nil {
-		log.Fatalf("Failed to create Temporal client: %v", err)
-	}
-	defer c.Close()
-
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
+
+	c, err := tClient.Dial(tClient.Options{
+		HostPort:  cfg.Temporal.HostPort,
+		Namespace: cfg.Temporal.Namespace,
+	})
+	if err != nil {
+		log.Fatalf("Failed to create Temporal client: %v", err)
+	}
+	defer c.Close()
 
 	grpcClis, cleanup, err := pkgGrpc.InitGrpcClients(pkgGrpc.GrpcAddresses{
 		ProductAddr: cfg.Grpc.ProductSvcAddr,

@@ -2,6 +2,7 @@ package order
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/vogiaan1904/order-orchestrator/internal/activities"
 	orderpb "github.com/vogiaan1904/order-orchestrator/protogen/golang/order"
@@ -29,6 +30,7 @@ func validateOrder(ctx workflow.Context, orderCode string) (*orderpb.OrderData, 
 }
 
 func reserveInventory(ctx workflow.Context, items []*orderpb.OrderItem) error {
+	log.Printf("Reserving inventory: %+v", items)
 	err := workflow.ExecuteActivity(
 		workflow.WithActivityOptions(ctx, getProductActivityOptions()),
 		(*activities.ProductActivities).ReserveInventory,
@@ -52,14 +54,14 @@ func updateOrderStatus(ctx workflow.Context, orderID string, status orderpb.Orde
 
 func processPayment(ctx workflow.Context, params PrePaymentOrderWorkflowParams) (*paymentpb.ProcessPaymentResponse, error) {
 	paymentRequest := &paymentpb.ProcessPaymentRequest{
-		OrderCode:   params.OrderCode,
-		UserId:      params.UserID,
-		Amount:      params.Amount,
-		Method:      params.PaymentMethod,
-		Description: params.Description,
-		Metadata:    params.Metadata,
+		OrderCode:       params.OrderCode,
+		UserId:          params.UserID,
+		Amount:          params.TotalAmount,
+		Provider:        params.Provider,
+		ProviderDetails: params.ProviderDetails,
+		Metadata:        params.Metadata,
 	}
-
+	
 	var paymentResponse *paymentpb.ProcessPaymentResponse
 	err := workflow.ExecuteActivity(
 		workflow.WithActivityOptions(ctx, getPaymentActivityOptions()),

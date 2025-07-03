@@ -6,7 +6,13 @@ import (
 )
 
 type Config struct {
-	Grpc GrpcConfig
+	Grpc     GrpcConfig
+	Temporal TemporalConfig
+}
+
+type TemporalConfig struct {
+	HostPort  string `env:"TEMPORAL_HOST_PORT" envDefault:"localhost:7233"`
+	Namespace string `env:"TEMPORAL_NAMESPACE" envDefault:"default"`
 }
 
 type GrpcConfig struct {
